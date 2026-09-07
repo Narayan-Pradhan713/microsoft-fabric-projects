@@ -1,0 +1,15 @@
+SELECT
+    m.EntityName,
+    m.SourceType,
+    m.SourceObject,
+    m.TargetTable,
+    m.WatermarkColumn,
+    m.BusinessKey,
+    m.LoadType,
+    m.TargetType,
+    w.LastWatermark
+FROM dbo.MetadataControl m
+LEFT JOIN dbo.WatermarkControl w
+    ON m.SourceObject = w.SourceTable
+WHERE m.SourceType = 'AzureSQL'
+  AND m.IsActive = 1;

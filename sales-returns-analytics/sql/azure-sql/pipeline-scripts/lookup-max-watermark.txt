@@ -1,0 +1,6 @@
+@concat(
+    'SELECT MAX(',
+    item().WatermarkColumn,
+    ') AS MaxWatermark FROM dbo.',
+    item().SourceObject
+)

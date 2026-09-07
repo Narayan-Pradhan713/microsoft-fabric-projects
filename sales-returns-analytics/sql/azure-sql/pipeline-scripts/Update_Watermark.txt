@@ -1,0 +1,9 @@
+@concat
+    'UPDATE dbo.WatermarkControl ',
+    'SET LastWatermark = ''',
+    activity('Lookup_MaxWatermark').output.firstRow.MaxWatermark,
+    ''' ',
+    'WHERE SourceTable = ''',
+    item().SourceObject,
+    ''''
+)
