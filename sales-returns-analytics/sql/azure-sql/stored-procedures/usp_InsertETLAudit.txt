@@ -1,0 +1,43 @@
+CREATE PROCEDURE [dbo].[usp_InsertETLAudit]
+    @PipelineName VARCHAR(255),
+    @TableName VARCHAR(255),
+    @RunStartTime DATETIME,
+    @RunEndTime DATETIME,
+    @Status VARCHAR(50),
+    @RowsRead INT,
+    @RowsInserted INT,
+    @RowsUpdated INT,
+    @RowsRejected INT,
+    @ErrorMessage VARCHAR(MAX) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO dbo.ETLAudit
+    (
+        PipelineName,
+        TableName,
+        RunStartTime,
+        RunEndTime,
+        Status,
+        RowsRead,
+        RowsInserted,
+        RowsUpdated,
+        RowsRejected,
+        ErrorMessage
+    )
+    VALUES
+    (
+        @PipelineName,
+        @TableName,
+        @RunStartTime,
+        @RunEndTime,
+        @Status,
+        @RowsRead,
+        @RowsInserted,
+        @RowsUpdated,
+        @RowsRejected,
+        @ErrorMessage
+    );
+END;
+GO

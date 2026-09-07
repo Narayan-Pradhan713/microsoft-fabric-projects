@@ -1,0 +1,25 @@
+CREATE PROCEDURE [dbo].[usp_InsertETLError]
+    @ErrorMessage VARCHAR(MAX),
+    @ErrorTime DATETIME,
+    @PipelineName VARCHAR(255),
+    @TableName VARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO dbo.ETLErrorLog
+    (
+        PipelineName,
+        TableName,
+        ErrorTime,
+        ErrorMessage
+    )
+    VALUES
+    (
+        @PipelineName,
+        @TableName,
+        @ErrorTime,
+        @ErrorMessage
+    );
+END;
+GO
