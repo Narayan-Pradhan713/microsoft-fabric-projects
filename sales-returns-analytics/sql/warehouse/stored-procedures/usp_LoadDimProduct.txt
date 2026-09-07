@@ -1,0 +1,25 @@
+CREATE PROCEDURE usp_LoadDimProduct
+AS
+BEGIN
+
+    TRUNCATE TABLE DimProduct;
+
+    INSERT INTO DimProduct
+    (
+        ProductID,
+        ProductName,
+        Category,
+        Price,
+        ModifiedDate,
+        IsDeleted
+    )
+    SELECT
+        ProductID,
+        ProductName,
+        Category,
+        Price,
+        ModifiedDate,
+        IsDeleted
+    FROM LH_IncrementalLoad.dbo.DimProduct;
+
+END;

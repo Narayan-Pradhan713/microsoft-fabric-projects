@@ -1,0 +1,41 @@
+ALTER PROCEDURE usp_ExtendDimDate
+AS
+BEGIN
+    DECLARE @MaxFactDate DATE, @MaxDimDate DATE;
+
+    SELECT @MaxFactDate =
+        CASE WHEN MAX(SaleDate) >= MAX(ReturnDate)
+             THEN MAX(SaleDate) ELSE MAX(ReturnDate) END
+    FROM (
+        SELECT MAX(SaleDate) SaleDate, CAST(NULL AS DATE) ReturnDate
+        FROM FactSales
+        UNION ALL
+        SELECT CAST(NULL AS DATE), MAX(ReturnDate)
+        FROM FactReturns
+    ) x;
+
+    SELECT @MaxDimDate = MAX(FullDate)
+    FROM DimDate;
+
+    IF @MaxFactDate > @MaxDimDate
+    BEGIN
+        INSERT INTO DimDate
+        SELECT
+            CONVERT(INT, CONVERT(VARCHAR(8),DATEADD(DAY,n,@MaxDimDate),112)),
+            DATEADD(DAY,n,@MaxDimDate),
+            DAY(DATEADD(DAY,n,@MaxDimDate)),
+            MONTH(DATEADD(DAY,n,@MaxDimDate)),
+            DATENAME(MONTH,DATEADD(DAY,n,@MaxDimDate)),
+            DATEPART(QUARTER,DATEADD(DAY,n,@MaxDimDate)),
+            YEAR(DATEADD(DAY,n,@MaxDimDate)),
+            DATENAME(WEEKDAY,DATEADD(DAY,n,@MaxDimDate)),
+            CASE WHEN DATEPART(WEEKDAY,DATEADD(DAY,n,@MaxDimDate)) IN (1,7)
+                 THEN 1 ELSE 0 END
+        FROM (VALUES
+            (1),(2),(3),(4),(5),(6),(7),(8),(9),(10),
+            (11),(12),(13),(14),(15),(16),(17),(18),(19),(20),
+            (21),(22),(23),(24),(25),(26),(27),(28),(29),(30)
+        ) v(n)
+        WHERE n <= DATEDIFF(DAY,@MaxDimDate,@MaxFactDate);
+    END
+END;

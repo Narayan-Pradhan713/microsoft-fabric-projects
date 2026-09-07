@@ -1,0 +1,48 @@
+CREATE PROCEDURE usp_MergeFactReturns
+AS
+BEGIN
+
+    MERGE INTO FactReturns AS target
+    USING LH_IncrementalLoad.dbo.factreturns AS source
+    ON target.ReturnID = source.ReturnID
+
+    WHEN MATCHED
+         AND source.UpdatedDate > target.UpdatedDate
+    THEN
+        UPDATE SET
+            target.SaleID = source.SaleID,
+            target.ReturnDate = source.ReturnDate,
+            target.ReturnQuantity = source.ReturnQuantity,
+            target.ReturnAmount = source.ReturnAmount,
+            target.ReturnReason = source.ReturnReason,
+            target.ModifiedDate = source.ModifiedDate,
+            target.CreatedDate = source.CreatedDate,
+            target.UpdatedDate = source.UpdatedDate
+
+    WHEN NOT MATCHED THEN
+        INSERT
+        (
+            ReturnID,
+            SaleID,
+            ReturnDate,
+            ReturnQuantity,
+            ReturnAmount,
+            ReturnReason,
+            ModifiedDate,
+            CreatedDate,
+            UpdatedDate
+        )
+        VALUES
+        (
+            source.ReturnID,
+            source.SaleID,
+            source.ReturnDate,
+            source.ReturnQuantity,
+            source.ReturnAmount,
+            source.ReturnReason,
+            source.ModifiedDate,
+            source.CreatedDate,
+            source.UpdatedDate
+        );
+
+END;

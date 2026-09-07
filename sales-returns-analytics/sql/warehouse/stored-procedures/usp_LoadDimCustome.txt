@@ -1,0 +1,25 @@
+CREATE PROCEDURE usp_LoadDimCustomer
+AS
+BEGIN
+
+    TRUNCATE TABLE DimCustomer;
+
+    INSERT INTO DimCustomer
+    (
+        CustomerID,
+        CustomerName,
+        Region,
+        CreatedDate,
+        ModifiedDate,
+        IsDeleted
+    )
+    SELECT
+        CustomerID,
+        CustomerName,
+        Region,
+        CreatedDate,
+        ModifiedDate,
+        IsDeleted
+    FROM LH_IncrementalLoad.dbo.DimCustomer;
+
+END;

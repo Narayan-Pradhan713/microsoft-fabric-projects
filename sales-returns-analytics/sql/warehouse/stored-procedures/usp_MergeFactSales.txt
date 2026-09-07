@@ -1,0 +1,51 @@
+CREATE PROCEDURE usp_MergeFactSales
+AS
+BEGIN
+
+    MERGE INTO FactSales AS target
+    USING LH_IncrementalLoad.dbo.FactSales AS source
+    ON target.SaleID = source.SaleID
+
+    WHEN MATCHED
+         AND source.UpdatedDate > target.UpdatedDate
+    THEN
+        UPDATE SET
+            target.CustomerID = source.CustomerID,
+            target.ProductID = source.ProductID,
+            target.SaleDate = source.SaleDate,
+            target.ModifiedDate = source.ModifiedDate,
+            target.Amount = source.Amount,
+            target.Status = source.Status,
+            target.CreatedDate = source.CreatedDate,
+            target.UpdatedDate = source.UpdatedDate,
+            target.IsDeleted = source.IsDeleted
+
+    WHEN NOT MATCHED THEN
+        INSERT
+        (
+            SaleID,
+            CustomerID,
+            ProductID,
+            SaleDate,
+            ModifiedDate,
+            Amount,
+            Status,
+            CreatedDate,
+            UpdatedDate,
+            IsDeleted
+        )
+        VALUES
+        (
+            source.SaleID,
+            source.CustomerID,
+            source.ProductID,
+            source.SaleDate,
+            source.ModifiedDate,
+            source.Amount,
+            source.Status,
+            source.CreatedDate,
+            source.UpdatedDate,
+            source.IsDeleted
+        );
+
+END;
