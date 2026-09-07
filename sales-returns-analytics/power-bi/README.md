@@ -1,21 +1,28 @@
-# Power BI Report
+# Power BI
 
 ## Overview
 
-This folder contains the Power BI reporting layer for the Sales & Returns Analytics project.
+This folder represents the Power BI reporting layer of the Sales & Returns Analytics project.
 
-The Power BI report is connected live to the Microsoft Fabric Semantic Model using Direct Lake.
+Power BI is connected to the Microsoft Fabric Semantic Model and is ready for creating interactive reports and dashboards using the prepared sales and returns data.
 
-The report provides interactive analytics for sales, returns, customers, and products.
+---
 
 ## Data Connection
 
-The Power BI report uses a live connection to the Microsoft Fabric Semantic Model.
+The Power BI report is connected to the Microsoft Fabric Semantic Model.
 
-**Semantic Model:**
-- SM_IncrementalLoad
+### Semantic Model
 
-The semantic model provides the following tables:
+**SM_IncrementalLoad**
+
+The semantic model provides the required data for reporting and analysis.
+
+---
+
+## Available Tables
+
+The following tables are available in Power BI.
 
 ### Dimension Tables
 
@@ -28,51 +35,44 @@ The semantic model provides the following tables:
 - FactSales
 - FactReturns
 
+---
+
 ## Measures Table
 
-A dedicated Measures Table is used to organize and centralize DAX measures.
+A dedicated Measures Table is available for organizing and creating DAX measures.
 
-This helps maintain:
+This helps with:
 
-- Better report organization
-- Reusable calculations
-- Easier measure management
-- Consistent business logic
+- Centralizing business calculations
+- Organizing DAX measures
+- Creating reusable calculations
+- Maintaining consistent business logic
 
-## Report Pages
+---
 
-### 1. Executive Overview
+## Reporting Capability
 
-Provides a high-level overview of business performance.
+The connected semantic model can be used to create reports and dashboards for:
 
-### 2. Sales Analysis
+- Sales analysis
+- Returns analysis
+- Customer analysis
+- Product analysis
+- Time-based analysis
 
-Provides detailed analysis of sales performance and trends.
+Power BI visuals and reports can be created using the available dimension tables, fact tables, and DAX measures.
 
-### 3. Returns Analysis
+---
 
-Provides analysis of product returns and return trends.
-
-### 4. Customer & Product
-
-Provides analysis of customers and product performance.
-
-## Architecture
-
-The Power BI report consumes data through the Microsoft Fabric Semantic Model.
+## Data Flow
 
 ```text
-Azure SQL Database ──┐
-                     │
-                     ▼
-              Fabric Lakehouse
-                     │
-Azure Blob Storage ──┤
-                     ▼
-              Fabric Warehouse
-                     │
-                     ▼
-              Semantic Model
-                     │
-                     ▼
-                Power BI
+Azure SQL Database ──────► Fabric Lakehouse ──────► Fabric Warehouse
+                                                           │
+Azure Blob Storage ──────► Fabric Lakehouse ──────────────┘
+                                                           │
+                                                           ▼
+                                                    Semantic Model
+                                                           │
+                                                           ▼
+                                                       Power BI
