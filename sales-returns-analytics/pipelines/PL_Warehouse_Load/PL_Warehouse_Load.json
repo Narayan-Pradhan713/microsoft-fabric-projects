@@ -1,0 +1,279 @@
+{
+    "name": "PL_Warehouse_Load",
+    "objectId": "b2dba253-40f8-47a8-b379-9cae8794d044",
+    "properties": {
+        "activities": [
+            {
+                "name": "Load_DimCustomer",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_LoadDimCustomer]"
+                },
+                "linkedService": {
+                    "name": "WH_IncrementalLoad",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "b3weh3xbsefevanpdi55rbuymq-4ifj5oz56b5upmy5dscxqtyvga.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "72e3b546-cb60-49df-ab6b-51157897430b",
+                            "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Load_DimProduct",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "Load_DimCustomer",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_LoadDimProduct]"
+                },
+                "linkedService": {
+                    "name": "WH_IncrementalLoad",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "b3weh3xbsefevanpdi55rbuymq-4ifj5oz56b5upmy5dscxqtyvga.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "72e3b546-cb60-49df-ab6b-51157897430b",
+                            "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Load_FactSales",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "Load_DimProduct",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_MergeFactSales]"
+                },
+                "linkedService": {
+                    "name": "WH_IncrementalLoad",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "b3weh3xbsefevanpdi55rbuymq-4ifj5oz56b5upmy5dscxqtyvga.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "72e3b546-cb60-49df-ab6b-51157897430b",
+                            "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Load_FactReturns",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "Load_FactSales",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_MergeFactReturns]"
+                },
+                "linkedService": {
+                    "name": "WH_IncrementalLoad",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "b3weh3xbsefevanpdi55rbuymq-4ifj5oz56b5upmy5dscxqtyvga.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "72e3b546-cb60-49df-ab6b-51157897430b",
+                            "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Extend_DimDate",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "Load_FactReturns",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_ExtendDimDate]"
+                },
+                "linkedService": {
+                    "name": "WH_IncrementalLoad",
+                    "properties": {
+                        "annotations": [],
+                        "type": "DataWarehouse",
+                        "typeProperties": {
+                            "endpoint": "b3weh3xbsefevanpdi55rbuymq-4ifj5oz56b5upmy5dscxqtyvga.datawarehouse.fabric.microsoft.com",
+                            "artifactId": "72e3b546-cb60-49df-ab6b-51157897430b",
+                            "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Audit_Warehouse_Load",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "Extend_DimDate",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_InsertETLAudit]",
+                    "database": "SQLServerDatabase",
+                    "storedProcedureParameters": {
+                        "ErrorMessage": {
+                            "value": null,
+                            "type": "String"
+                        },
+                        "PipelineName": {
+                            "value": {
+                                "value": "PL_Warehouse_Load",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "RowsInserted": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RowsRead": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RowsRejected": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RowsUpdated": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RunEndTime": {
+                            "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                            },
+                            "type": "DateTime"
+                        },
+                        "RunStartTime": {
+                            "value": {
+                                "value": "@pipeline().TriggerTime",
+                                "type": "Expression"
+                            },
+                            "type": "DateTime"
+                        },
+                        "Status": {
+                            "value": "SUCCESS",
+                            "type": "String"
+                        },
+                        "TableName": {
+                            "value": "Warehouse_Load",
+                            "type": "String"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                }
+            },
+            {
+                "name": "Teams_Notify_Failure",
+                "type": "MicrosoftTeams",
+                "dependsOn": [
+                    {
+                        "activity": "Extend_DimDate",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "operationType": "SendMessageInChannel",
+                    "content": "<p>Fabric ETL Pipeline Failure</p>\n<p><br></p>\n<p>Pipeline: PL_Warehouse_Load</p>\n<p><br></p>\n<p>The Warehouse pipeline has failed.</p>\n<p><br></p>\n<p>Please check the Fabric pipeline run history to identify the failed activity and error details.</p>\n<p><br></p>\n<p>Time:@{pipeline().TriggerTime}</p>",
+                    "subject": "Fabric ETL Pipeline Failed",
+                    "teamId": "a569a9e0-17d2-490f-afa9-ac8c80c64bc2",
+                    "channelId": "19:eb75f8bc9ed5487eb761cde4e145ac38@thread.tacv2"
+                },
+                "externalReferences": {
+                    "connection": "a56334b4-0906-4889-9d8f-6296dbe087e7"
+                }
+            }
+        ],
+        "lastModifiedByObjectId": "c6b56cfa-ebf5-4056-b716-99610941ab63",
+        "lastPublishTime": "2026-09-05T18:12:12Z"
+    }
+}
