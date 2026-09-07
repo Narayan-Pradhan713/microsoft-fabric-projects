@@ -1,0 +1,32 @@
+SELECT 'DimCustomer' AS TableName, COUNT(*) AS TotalRows,
+       CAST(NULL AS DATE) AS MinDate,
+       CAST(NULL AS DATE) AS MaxDate
+FROM DimCustomer
+
+UNION ALL
+
+SELECT 'DimProduct', COUNT(*),
+       CAST(NULL AS DATE),
+       CAST(NULL AS DATE)
+FROM DimProduct
+
+UNION ALL
+
+SELECT 'FactSales', COUNT(*),
+       MIN(SaleDate),
+       MAX(SaleDate)
+FROM FactSales
+
+UNION ALL
+
+SELECT 'FactReturns', COUNT(*),
+       MIN(ReturnDate),
+       MAX(ReturnDate)
+FROM FactReturns
+
+UNION ALL
+
+SELECT 'DimDate', COUNT(*),
+       MIN(FullDate),
+       MAX(FullDate)
+FROM DimDate;
