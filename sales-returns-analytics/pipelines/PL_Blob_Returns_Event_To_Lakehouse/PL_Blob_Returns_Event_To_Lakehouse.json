@@ -1,0 +1,281 @@
+{
+    "name": "PL_Blob_Returns_Event_To_Lakehouse",
+    "objectId": "d9c3fc3c-8610-44d8-a087-2c06a54ae565",
+    "properties": {
+        "activities": [
+            {
+                "name": "Copy_Returns_Event_File",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings",
+                            "recursive": false,
+                            "enablePartitionDiscovery": false
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextReadSettings"
+                        },
+                        "datasetSettings": {
+                            "annotations": [],
+                            "type": "DelimitedText",
+                            "typeProperties": {
+                                "location": {
+                                    "type": "AzureBlobFSLocation",
+                                    "fileName": {
+                                        "value": "@trim(last(split(pipeline().parameters.file_name,'/')))",
+                                        "type": "Expression"
+                                    },
+                                    "folderPath": "returns",
+                                    "fileSystem": "fabric-project"
+                                },
+                                "columnDelimiter": ",",
+                                "escapeChar": "\\",
+                                "firstRowAsHeader": true,
+                                "quoteChar": "\""
+                            },
+                            "schema": [],
+                            "externalReferences": {
+                                "connection": "b5ca66ed-171c-47ed-91fa-ef28d43fd378"
+                            }
+                        }
+                    },
+                    "sink": {
+                        "type": "DelimitedTextSink",
+                        "storeSettings": {
+                            "type": "LakehouseWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "DelimitedTextWriteSettings",
+                            "fileExtension": ".txt"
+                        },
+                        "datasetSettings": {
+                            "annotations": [],
+                            "linkedService": {
+                                "name": "LH_IncrementalLoad",
+                                "properties": {
+                                    "annotations": [],
+                                    "type": "Lakehouse",
+                                    "typeProperties": {
+                                        "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530",
+                                        "artifactId": "5b634eb1-2473-460d-a75c-313cfc6c7c24",
+                                        "rootFolder": "Files"
+                                    }
+                                }
+                            },
+                            "type": "DelimitedText",
+                            "typeProperties": {
+                                "location": {
+                                    "type": "LakehouseLocation",
+                                    "fileName": {
+                                        "value": "@trim(last(split(pipeline().parameters.file_name,'/')))",
+                                        "type": "Expression"
+                                    },
+                                    "folderPath": "Returns"
+                                },
+                                "columnDelimiter": ",",
+                                "escapeChar": "\\",
+                                "firstRowAsHeader": true,
+                                "quoteChar": "\""
+                            },
+                            "schema": []
+                        }
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                }
+            },
+            {
+                "name": "NB_Process_Returns_Event",
+                "type": "TridentNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Copy_Returns_Event_File",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "notebookId": "2f97d6e1-3f15-4200-b534-56d65054a67c",
+                    "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530",
+                    "parameters": {
+                        "file_name": {
+                            "value": {
+                                "value": "@trim(last(split(pipeline().parameters.file_name,'/')))",
+                                "type": "Expression"
+                            },
+                            "type": "string"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "b514c501-1ce9-43f0-ab95-a3925770587e"
+                }
+            },
+            {
+                "name": "Audit_Blob_Load",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "NB_Process_Returns_Event",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_InsertETLAudit]",
+                    "database": "SQLServerDatabase",
+                    "storedProcedureParameters": {
+                        "ErrorMessage": {
+                            "value": null,
+                            "type": "String"
+                        },
+                        "PipelineName": {
+                            "value": {
+                                "value": "PL_Blob_Returns_Event_To_Lakehouse",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "RowsInserted": {
+                            "value": {
+                                "value": "0",
+                                "type": "Expression"
+                            },
+                            "type": "Int32"
+                        },
+                        "RowsRead": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RowsRejected": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RowsUpdated": {
+                            "value": "0",
+                            "type": "Int32"
+                        },
+                        "RunEndTime": {
+                            "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                            },
+                            "type": "DateTime"
+                        },
+                        "RunStartTime": {
+                            "value": {
+                                "value": "@pipeline().TriggerTime",
+                                "type": "Expression"
+                            },
+                            "type": "DateTime"
+                        },
+                        "Status": {
+                            "value": "SUCCESS",
+                            "type": "String"
+                        },
+                        "TableName": {
+                            "value": "FactReturns",
+                            "type": "String"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                }
+            },
+            {
+                "name": "Log_Error",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "NB_Process_Returns_Event",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "storedProcedureName": "[dbo].[usp_InsertETLError]",
+                    "database": "SQLServerDatabase",
+                    "storedProcedureParameters": {
+                        "ErrorMessage": {
+                            "value": {
+                                "value": "@activity('NB_Process_Returns_Event').error.message",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "ErrorTime": {
+                            "value": {
+                                "value": "@utcNow()",
+                                "type": "Expression"
+                            },
+                            "type": "DateTime"
+                        },
+                        "PipelineName": {
+                            "value": {
+                                "value": "@pipeline().Pipeline",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "TableName": {
+                            "value": "FactReturns",
+                            "type": "String"
+                        }
+                    }
+                },
+                "externalReferences": {
+                    "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                }
+            }
+        ],
+        "parameters": {
+            "file_name": {
+                "type": "string"
+            }
+        },
+        "lastModifiedByObjectId": "c6b56cfa-ebf5-4056-b716-99610941ab63",
+        "lastPublishTime": "2026-09-05T16:50:07Z"
+    }
+}
