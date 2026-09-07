@@ -1,0 +1,215 @@
+{
+    "name": "PL_AzureSQL_InitialLoad",
+    "objectId": "7699781e-d863-4f72-ad29-bbb3e79a5bfb",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup_Metadata",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT\n    EntityName,\n    SourceType,\n    SourceObject,\n    TargetTable,\n    WatermarkColumn,\n    BusinessKey,\n    LoadType,\n    TargetType\nFROM dbo.MetadataControl\nWHERE SourceType = 'AzureSQL';",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "firstRowOnly": false,
+                    "datasetSettings": {
+                        "annotations": [],
+                        "type": "AzureSqlTable",
+                        "schema": [],
+                        "typeProperties": {
+                            "schema": "dbo",
+                            "table": "MetadataControl",
+                            "database": "SQLServerDatabase"
+                        },
+                        "externalReferences": {
+                            "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "ForEach_SQLTables",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup_Metadata",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Lookup_Metadata').output.value",
+                        "type": "Expression"
+                    },
+                    "activities": [
+                        {
+                            "name": "Copy_SQL_To_Lakehouse",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None",
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "type": "AzureSqlTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "dbo",
+                                            "table": {
+                                                "value": "@item().SourceObject",
+                                                "type": "Expression"
+                                            },
+                                            "database": "SQLServerDatabase"
+                                        },
+                                        "externalReferences": {
+                                            "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                                        }
+                                    }
+                                },
+                                "sink": {
+                                    "type": "LakehouseTableSink",
+                                    "tableActionOption": "OverwriteSchema",
+                                    "partitionOption": "None",
+                                    "applyVOrder": false,
+                                    "enableTimestampNtz": false,
+                                    "datasetSettings": {
+                                        "annotations": [],
+                                        "linkedService": {
+                                            "name": "LH_IncrementalLoad",
+                                            "properties": {
+                                                "annotations": [],
+                                                "type": "Lakehouse",
+                                                "typeProperties": {
+                                                    "workspaceId": "bb9e0ae2-f03d-477b-b31d-1c85784f1530",
+                                                    "artifactId": "5b634eb1-2473-460d-a75c-313cfc6c7c24",
+                                                    "rootFolder": "Tables"
+                                                }
+                                            }
+                                        },
+                                        "type": "LakehouseTable",
+                                        "schema": [],
+                                        "typeProperties": {
+                                            "schema": "dbo",
+                                            "table": {
+                                                "value": "@item().TargetTable",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "Lookup_MaxWatermark",
+                            "type": "Lookup",
+                            "dependsOn": [
+                                {
+                                    "activity": "Copy_SQL_To_Lakehouse",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n    'SELECT MAX(',\n    item().WatermarkColumn,\n    ') AS MaxWatermark FROM dbo.',\n    item().SourceObject\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "datasetSettings": {
+                                    "annotations": [],
+                                    "type": "AzureSqlTable",
+                                    "schema": [],
+                                    "typeProperties": {
+                                        "database": "SQLServerDatabase"
+                                    },
+                                    "externalReferences": {
+                                        "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "Update_Watermark",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "Lookup_MaxWatermark",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "type": "Query",
+                                        "text": {
+                                            "value": "@concat(\n    'UPDATE dbo.WatermarkControl ',\n    'SET LastWatermark = ''',\n    activity('Lookup_MaxWatermark').output.firstRow.MaxWatermark,\n    ''' ',\n    'WHERE SourceTable = ''',\n    item().SourceObject,\n    ''''\n)",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00",
+                                "database": "SQLServerDatabase"
+                            },
+                            "externalReferences": {
+                                "connection": "0cc6bd6b-8d75-4343-8748-4803c7dc99dd"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "lastModifiedByObjectId": "c6b56cfa-ebf5-4056-b716-99610941ab63",
+        "lastPublishTime": "2026-08-26T06:38:55Z"
+    }
+}
